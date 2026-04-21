@@ -1,0 +1,137 @@
+LeetCode Solutions (Java)
+
+-----------------------------------
+695. Max Area of Island
+-----------------------------------
+class Solution {
+    public int maxAreaOfIsland(int[][] grid) {
+        int max = 0;
+        int m = grid.length, n = grid[0].length;
+
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 1) {
+                    max = Math.max(max, dfs(grid, i, j));
+                }
+            }
+        }
+        return max;
+    }
+
+    private int dfs(int[][] grid, int i, int j) {
+        if (i < 0 || j < 0 || i >= grid.length || j >= grid[0].length || grid[i][j] == 0) {
+            return 0;
+        }
+
+        grid[i][j] = 0;
+        return 1 + dfs(grid, i+1, j) + dfs(grid, i-1, j)
+                 + dfs(grid, i, j+1) + dfs(grid, i, j-1);
+    }
+}
+
+-----------------------------------
+841. Keys and Rooms
+-----------------------------------
+import java.util.*;
+
+class Solution {
+    public boolean canVisitAllRooms(List<List<Integer>> rooms) {
+        boolean[] visited = new boolean[rooms.size()];
+        dfs(rooms, visited, 0);
+
+        for (boolean v : visited) {
+            if (!v) return false;
+        }
+        return true;
+    }
+
+    private void dfs(List<List<Integer>> rooms, boolean[] visited, int room) {
+        if (visited[room]) return;
+
+        visited[room] = true;
+
+        for (int key : rooms.get(room)) {
+            dfs(rooms, visited, key);
+        }
+    }
+}
+
+-----------------------------------
+207. Course Schedule
+-----------------------------------
+import java.util.*;
+
+class Solution {
+    public boolean canFinish(int numCourses, int[][] prerequisites) {
+        List<List<Integer>> graph = new ArrayList<>();
+        for (int i = 0; i < numCourses; i++) graph.add(new ArrayList<>());
+
+        int[] indegree = new int[numCourses];
+
+        for (int[] p : prerequisites) {
+            graph.get(p[1]).add(p[0]);
+            indegree[p[0]]++;
+        }
+
+        Queue<Integer> q = new LinkedList<>();
+        for (int i = 0; i < numCourses; i++) {
+            if (indegree[i] == 0) q.offer(i);
+        }
+
+        int count = 0;
+
+        while (!q.isEmpty()) {
+            int curr = q.poll();
+            count++;
+
+            for (int nei : graph.get(curr)) {
+                if (--indegree[nei] == 0) {
+                    q.offer(nei);
+                }
+            }
+        }
+
+        return count == numCourses;
+    }
+}
+
+-----------------------------------
+210. Course Schedule II
+-----------------------------------
+import java.util.*;
+
+class Solution {
+    public int[] findOrder(int numCourses, int[][] prerequisites) {
+        List<List<Integer>> graph = new ArrayList<>();
+        for (int i = 0; i < numCourses; i++) graph.add(new ArrayList<>());
+
+        int[] indegree = new int[numCourses];
+
+        for (int[] p : prerequisites) {
+            graph.get(p[1]).add(p[0]);
+            indegree[p[0]]++;
+        }
+
+        Queue<Integer> q = new LinkedList<>();
+        for (int i = 0; i < numCourses; i++) {
+            if (indegree[i] == 0) q.offer(i);
+        }
+
+        int[] order = new int[numCourses];
+        int idx = 0;
+
+        while (!q.isEmpty()) {
+            int curr = q.poll();
+            order[idx++] = curr;
+
+            for (int nei : graph.get(curr)) {
+                if (--indegree[nei] == 0) {
+                    q.offer(nei);
+                }
+            }
+        }
+
+        if (idx != numCourses) return new int[0];
+        return order;
+    }
+}
