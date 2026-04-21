@@ -1,0 +1,353 @@
+LeetCode Week 8 - Java Solutions
+
+-----------------------------------
+1203. Sort Items by Groups Respecting Dependencies
+-----------------------------------
+import java.util.*;
+
+class Solution {
+    public int[] sortItems(int n, int m, int[] group, List<List<Integer>> beforeItems) {
+
+        for (int i = 0; i < n; i++) {
+            if (group[i] == -1) group[i] = m++;
+        }
+
+        List<List<Integer>> itemGraph = new ArrayList<>();
+        List<List<Integer>> groupGraph = new ArrayList<>();
+
+        for (int i = 0; i < n; i++) itemGraph.add(new ArrayList<>());
+        for (int i = 0; i < m; i++) groupGraph.add(new ArrayList<>());
+
+        int[] itemIndegree = new int[n];
+        int[] groupIndegree = new int[m];
+
+        for (int i = 0; i < n; i++) {
+            for (int prev : beforeItems.get(i)) {
+                itemGraph.get(prev).add(i);
+                itemIndegree[i]++;
+                if (group[i] != group[prev]) {
+                    groupGraph.get(group[prev]).add(group[i]);
+                    groupIndegree[group[i]]++;
+                }
+            }
+        }
+
+        List<Integer> itemOrder = topoSort(itemGraph, itemIndegree, n);
+        List<Integer> groupOrder = topoSort(groupGraph, groupIndegree, m);
+
+        if (itemOrder.size() == 0 || groupOrder.size() == 0) return new int[0];
+
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        for (int item : itemOrder) {
+            map.computeIfAbsent(group[item], k -> new ArrayList<>()).add(item);
+        }
+
+        List<Integer> result = new ArrayList<>();
+        for (int g : groupOrder) {
+            result.addAll(map.getOrDefault(g, new ArrayList<>()));
+        }
+
+        return result.stream().mapToInt(i -> i).toArray();
+    }
+
+    private List<Integer> topoSort(List<List<Integer>> graph, int[] indegree, int n) {
+        Queue<Integer> q = new LinkedList<>();
+        for (int i = 0; i < n; i++) if (indegree[i] == 0) q.offer(i);
+
+        List<Integer> res = new ArrayList<>();
+
+        while (!q.isEmpty()) {
+            int curr = q.poll();
+            res.add(curr);
+            for (int nei : graph.get(curr)) {
+                if (--indegree[nei] == 0) q.offer(nei);
+            }
+        }
+
+        return res.size() == n ? res : new ArrayList<>();
+    }
+}
+
+-----------------------------------
+1129. Shortest Path with Alternating Colors
+-----------------------------------
+import java.util.*;
+
+class Solution {
+    public int[] shortestAlternatingPaths(int n, int[][] redEdges, int[][] blueEdges) {
+
+        List<Integer>[] red = new ArrayList[n];
+        List<Integer>[] blue = new ArrayList[n];
+
+        for (int i = 0; i < n; i++) {
+            red[i] = new ArrayList<>();
+            blue[i] = new ArrayList<>();
+        }
+
+        for (int[] e : redEdges) red[e[0]].add(e[1]);
+        for (int[] e : blueEdges) blue[e[0]].add(e[1]);
+
+        int[][] dist = new int[n][2];
+        for (int[] d : dist) Arrays.fill(d, Integer.MAX_VALUE);
+
+        Queue<int[]> q = new LinkedList<>();
+        q.offer(new int[]{0, 0});
+        q.offer(new int[]{0, 1});
+
+        dist[0][0] = dist[0][1] = 0;
+
+        while (!q.isEmpty()) {
+            int[] curr = q.poll();
+            int node = curr[0], color = curr[1];
+
+            List<Integer>[] nextGraph = (color == 0) ? blue : red;
+
+            for (int nei : nextGraph[node]) {
+                if (dist[nei][1 - color] == Integer.MAX_VALUE) {
+                    dist[nei][1 - color] = dist[node][color] + 1;
+                    q.offer(new int[]{nei, 1 - color});
+                }
+            }
+        }
+
+        int[] res = new int[n];
+        for (int i = 0; i < n; i++) {
+            int d = Math.min(dist[i][0], dist[i][1]);
+            res[i] = (d == Integer.MAX_VALUE) ? -1 : d;
+        }
+        return res;
+    }
+}
+
+-----------------------------------
+542. 01 Matrix
+-----------------------------------
+import java.util.*;
+
+class Solution {
+    public int[][] updateMatrix(int[][] mat) {
+
+        int m = mat.length, n = mat[0].length;
+        Queue<int[]> q = new LinkedList<>();
+
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (mat[i][j] == 0) {
+                    q.offer(new int[]{i, j});
+                } else {
+                    mat[i][j] = Integer.MAX_VALUE;
+                }
+            }
+        }
+
+        int[][] dirs = {{1,0},{-1,0},{0,1},{0,-1}};
+
+        while (!q.isEmpty()) {
+            int[] curr = q.poll();
+
+            for (int[] d : dirs) {
+                int r = curr[0] + d[0];
+                int c = curr[1] + d[1];
+
+                if (r >= 0 && c >= 0 && r < m && c < n &&
+                    mat[r][c] > mat[curr[0]][curr[1]] + 1) {
+
+                    mat[r][c] = mat[curr[0]][curr[1]] + 1;
+                    q.offer(new int[]{r, c});
+                }
+            }
+        }
+
+        return mat;
+    }
+}
+
+-----------------------------------
+200. Number of Islands
+-----------------------------------
+class Solution {
+    public int numIslands(char[][] grid) {
+
+        int count = 0;
+
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[0].length; j++) {
+                if (grid[i][j] == '1') {
+                    dfs(grid, i, j);
+                    count++;
+                }
+            }
+        }
+
+        return count;
+    }
+
+    private void dfs(char[][] grid, int i, int j) {
+        if (i < 0 || j < 0 || i >= grid.length || j >= grid[0].length || grid[i][j] == '0') {
+            return;
+        }
+
+        grid[i][j] = '0';
+
+        dfs(grid, i+1, j);
+        dfs(grid, i-1, j);
+        dfs(grid, i, j+1);
+        dfs(grid, i, j-1);
+    }
+}
+
+-----------------------------------
+733. Flood Fill
+-----------------------------------
+class Solution {
+    public int[][] floodFill(int[][] image, int sr, int sc, int color) {
+
+        int old = image[sr][sc];
+        if (old == color) return image;
+
+        dfs(image, sr, sc, old, color);
+        return image;
+    }
+
+    private void dfs(int[][] img, int i, int j, int old, int color) {
+        if (i < 0 || j < 0 || i >= img.length || j >= img[0].length || img[i][j] != old) {
+            return;
+        }
+
+        img[i][j] = color;
+
+        dfs(img, i+1, j, old, color);
+        dfs(img, i-1, j, old, color);
+        dfs(img, i, j+1, old, color);
+        dfs(img, i, j-1, old, color);
+    }
+}
+
+-----------------------------------
+721. Accounts Merge
+-----------------------------------
+import java.util.*;
+
+class Solution {
+    public List<List<String>> accountsMerge(List<List<String>> accounts) {
+
+        Map<String, String> parent = new HashMap<>();
+        Map<String, String> owner = new HashMap<>();
+
+        for (List<String> acc : accounts) {
+            String name = acc.get(0);
+            for (int i = 1; i < acc.size(); i++) {
+                parent.putIfAbsent(acc.get(i), acc.get(i));
+                owner.put(acc.get(i), name);
+                union(parent, acc.get(1), acc.get(i));
+            }
+        }
+
+        Map<String, TreeSet<String>> map = new HashMap<>();
+
+        for (String email : parent.keySet()) {
+            String root = find(parent, email);
+            map.computeIfAbsent(root, x -> new TreeSet<>()).add(email);
+        }
+
+        List<List<String>> res = new ArrayList<>();
+
+        for (String root : map.keySet()) {
+            List<String> list = new ArrayList<>();
+            list.add(owner.get(root));
+            list.addAll(map.get(root));
+            res.add(list);
+        }
+
+        return res;
+    }
+
+    private String find(Map<String, String> parent, String x) {
+        if (!parent.get(x).equals(x)) {
+            parent.put(x, find(parent, parent.get(x)));
+        }
+        return parent.get(x);
+    }
+
+    private void union(Map<String, String> parent, String a, String b) {
+        parent.put(find(parent, a), find(parent, b));
+    }
+}
+
+-----------------------------------
+202. Happy Number
+-----------------------------------
+import java.util.*;
+
+class Solution {
+    public boolean isHappy(int n) {
+
+        Set<Integer> seen = new HashSet<>();
+
+        while (n != 1 && !seen.contains(n)) {
+            seen.add(n);
+            n = next(n);
+        }
+
+        return n == 1;
+    }
+
+    private int next(int n) {
+        int sum = 0;
+        while (n > 0) {
+            int d = n % 10;
+            sum += d * d;
+            n /= 10;
+        }
+        return sum;
+    }
+}
+
+-----------------------------------
+929. Unique Email Addresses
+-----------------------------------
+import java.util.*;
+
+class Solution {
+    public int numUniqueEmails(String[] emails) {
+
+        Set<String> set = new HashSet<>();
+
+        for (String email : emails) {
+            String[] parts = email.split("@");
+            String local = parts[0];
+            String domain = parts[1];
+
+            if (local.contains("+")) {
+                local = local.substring(0, local.indexOf("+"));
+            }
+
+            local = local.replace(".", "");
+            set.add(local + "@" + domain);
+        }
+
+        return set.size();
+    }
+}
+
+-----------------------------------
+49. Group Anagrams
+-----------------------------------
+import java.util.*;
+
+class Solution {
+    public List<List<String>> groupAnagrams(String[] strs) {
+
+        Map<String, List<String>> map = new HashMap<>();
+
+        for (String s : strs) {
+            char[] arr = s.toCharArray();
+            Arrays.sort(arr);
+            String key = new String(arr);
+
+            map.computeIfAbsent(key, k -> new ArrayList<>()).add(s);
+        }
+
+        return new ArrayList<>(map.values());
+    }
+}
