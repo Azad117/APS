@@ -1,0 +1,180 @@
+LeetCode Week 9 - Java Solutions
+
+-----------------------------------
+169. Majority Element
+-----------------------------------
+class Solution {
+    public int majorityElement(int[] nums) {
+        int count = 0, candidate = 0;
+        for (int num : nums) {
+            if (count == 0) candidate = num;
+            count += (num == candidate) ? 1 : -1;
+        }
+        return candidate;
+    }
+}
+
+-----------------------------------
+190. Reverse Bits
+-----------------------------------
+class Solution {
+    public int reverseBits(int n) {
+        int res = 0;
+        for (int i = 0; i < 32; i++) {
+            res <<= 1;
+            res |= (n & 1);
+            n >>= 1;
+        }
+        return res;
+    }
+}
+
+-----------------------------------
+1763. Longest Nice Substring
+-----------------------------------
+class Solution {
+    public String longestNiceSubstring(String s) {
+        if (s.length() < 2) return "";
+
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (s.indexOf(Character.toLowerCase(c)) == -1 ||
+                s.indexOf(Character.toUpperCase(c)) == -1) {
+
+                String left = longestNiceSubstring(s.substring(0, i));
+                String right = longestNiceSubstring(s.substring(i + 1));
+
+                return left.length() >= right.length() ? left : right;
+            }
+        }
+        return s;
+    }
+}
+
+-----------------------------------
+315. Count of Smaller Numbers After Self
+-----------------------------------
+import java.util.*;
+
+class Solution {
+    private int[] count;
+    private int[] index;
+
+    public List<Integer> countSmaller(int[] nums) {
+        int n = nums.length;
+        count = new int[n];
+        index = new int[n];
+
+        for (int i = 0; i < n; i++) index[i] = i;
+
+        mergeSort(nums, 0, n - 1);
+
+        List<Integer> res = new ArrayList<>();
+        for (int c : count) res.add(c);
+        return res;
+    }
+
+    private void mergeSort(int[] nums, int left, int right) {
+        if (left >= right) return;
+
+        int mid = (left + right) / 2;
+        mergeSort(nums, left, mid);
+        mergeSort(nums, mid + 1, right);
+        merge(nums, left, mid, right);
+    }
+
+    private void merge(int[] nums, int left, int mid, int right) {
+        int i = left, j = mid + 1, k = 0;
+        int[] temp = new int[right - left + 1];
+
+        while (i <= mid && j <= right) {
+            if (nums[index[i]] <= nums[index[j]]) {
+                temp[k] = index[j];
+                j++;
+            } else {
+                count[index[i]] += right - j + 1;
+                temp[k] = index[i];
+                i++;
+            }
+            k++;
+        }
+
+        while (i <= mid) temp[k++] = index[i++];
+        while (j <= right) temp[k++] = index[j++];
+
+        for (int t = 0; t < temp.length; t++) {
+            index[left + t] = temp[t];
+        }
+    }
+}
+
+-----------------------------------
+973. K Closest Points to Origin
+-----------------------------------
+import java.util.*;
+
+class Solution {
+    public int[][] kClosest(int[][] points, int k) {
+        PriorityQueue<int[]> maxHeap = new PriorityQueue<>(
+            (a, b) -> (b[0]*b[0] + b[1]*b[1]) - (a[0]*a[0] + a[1]*a[1])
+        );
+
+        for (int[] p : points) {
+            maxHeap.offer(p);
+            if (maxHeap.size() > k) maxHeap.poll();
+        }
+
+        return maxHeap.toArray(new int[k][]);
+    }
+}
+
+-----------------------------------
+70. Climbing Stairs
+-----------------------------------
+class Solution {
+    public int climbStairs(int n) {
+        if (n <= 2) return n;
+        int a = 1, b = 2;
+
+        for (int i = 3; i <= n; i++) {
+            int temp = a + b;
+            a = b;
+            b = temp;
+        }
+        return b;
+    }
+}
+
+-----------------------------------
+198. House Robber
+-----------------------------------
+class Solution {
+    public int rob(int[] nums) {
+        int prev1 = 0, prev2 = 0;
+
+        for (int num : nums) {
+            int temp = Math.max(prev1, prev2 + num);
+            prev2 = prev1;
+            prev1 = temp;
+        }
+
+        return prev1;
+    }
+}
+
+-----------------------------------
+746. Min Cost Climbing Stairs
+-----------------------------------
+class Solution {
+    public int minCostClimbingStairs(int[] cost) {
+        int a = 0, b = 0;
+
+        for (int i = 2; i <= cost.length; i++) {
+            int curr = Math.min(b + cost[i - 1], a + cost[i - 2]);
+            a = b;
+            b = curr;
+        }
+
+        return b;
+    }
+}
